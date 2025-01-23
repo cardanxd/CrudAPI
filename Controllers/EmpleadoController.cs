@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using CrudAPI.Context;
 using CrudAPI.DTOs;
 using CrudAPI.Entities;
+using CrudAPI.Services;
 
 namespace CrudAPI.Controllers
 {
@@ -11,43 +12,25 @@ namespace CrudAPI.Controllers
     [ApiController]
     public class EmpleadoController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        public EmpleadoController(AppDbContext context)
+        private readonly EmpleadoService _empleadoService;
+        public EmpleadoController(EmpleadoService empleadoService)
         {
-            _context = context;
+            _empleadoService = empleadoService;
         }
 
         [HttpGet]
         [Route("lista")]
         public async Task<ActionResult<List<EmpleadoDTO>>> Get()
         {
-            var listaDto = new List<EmpleadoDTO>();
-            foreach (var item in await _context.Empleados.Include(p => p.PerfilReferencia).ToListAsync())
-            {
-                listaDto.Add(new EmpleadoDTO
-                {
-                    IdEmpleado = item.IdEmpleado,
-                    NompreCompleto = item.NompreCompleto,
-                    Sueldo = item.Sueldo,
-                    IdPerfil = item.IdPerfil,
-                    NombrePerfil = item.PerfilReferencia.Nombre
-                });
-            }
-            return Ok(listaDto);
+            return Ok(await _empleadoService.Get());
         }
 
         [HttpGet]
         [Route("lista/{id}")]
         public async Task<ActionResult<EmpleadoDTO>> GetEmpleado(int id)
         {
-            var empleadoDto = new EmpleadoDTO();
-            var empleadoDb = await _context.Empleados.Include(p => p.PerfilReferencia).Where(e => e.IdEmpleado == id).FirstAsync();
-            if (empleadoDb is null) return NotFound("Empleado no encontrado");
-            empleadoDto.IdEmpleado = empleadoDb.IdEmpleado;
-            empleadoDto.NompreCompleto = empleadoDb.NompreCompleto;
-            empleadoDto.Sueldo = empleadoDb.Sueldo;
-            empleadoDto.IdPerfil = empleadoDb.IdPerfil;
-            empleadoDto.NombrePerfil = empleadoDb.PerfilReferencia.Nombre;
+            var empleadoDto = await _empleadoService.First(id);
+            if (empleadoDto is null) return NotFound("Empleado no encontrado");
             return Ok(empleadoDto);
         }
 
@@ -55,15 +38,7 @@ namespace CrudAPI.Controllers
         [Route("guardar")]
         public async Task<ActionResult<EmpleadoDTO>> Guardar(EmpleadoDTO empleadoDTO)
         {
-            var empleadoDb = new Empleado
-            {
-                NompreCompleto = empleadoDTO.NompreCompleto,
-                Sueldo = empleadoDTO.Sueldo,
-                IdPerfil = empleadoDTO.IdPerfil
-            };
-
-            await _context.Empleados.AddAsync(empleadoDb);
-            await _context.SaveChangesAsync();
+            if(await _empleadoService.Create(empleadoDTO) is null) return NotFound("No se pudo guardar el empleado.");
             return Ok("Empleado agregado");
         }
 
@@ -71,13 +46,7 @@ namespace CrudAPI.Controllers
         [Route("editar")]
         public async Task<ActionResult<EmpleadoDTO>> Editar(EmpleadoDTO empleadoDTO)
         {
-            var empleadoDb = await _context.Empleados.Include(p => p.PerfilReferencia).Where(e => e.IdEmpleado == empleadoDTO.IdEmpleado).FirstAsync();
-            if(empleadoDb is null) return NotFound("Empleado no encontrado");
-            empleadoDb.NompreCompleto = empleadoDTO.NompreCompleto;
-            empleadoDb.Sueldo = empleadoDTO.Sueldo;
-            empleadoDb.IdPerfil = empleadoDTO.IdPerfil;
-            _context.Empleados.Update(empleadoDb);
-            await _context.SaveChangesAsync();
+            if (await _empleadoService.Update(empleadoDTO) is null) return NotFound("No se pudo actualizar el empleado");
             return Ok("Empleado modificado");
         }
 
@@ -85,10 +54,7 @@ namespace CrudAPI.Controllers
         [Route("eliminar/{id}")]
         public async Task<ActionResult<EmpleadoDTO>> Eliminar(int id)
         {
-            var empleadoDb = await _context.Empleados.FindAsync(id);
-            if(empleadoDb is null) return NotFound("Empleado no encontrado");
-            _context.Empleados.Remove(empleadoDb);
-            await _context.SaveChangesAsync();
+            if(await _empleadoService.Delete(id) is false) return NotFound("No se pudo eliminar el empleado");
             return Ok("Empleado eliminado");
         }
 

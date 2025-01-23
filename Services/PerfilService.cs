@@ -13,7 +13,7 @@ public class PerfilService
         _context = context;
     }
 
-    public async Task<List<PerfilDTO>> Lista()
+    public async Task<List<PerfilDTO>> Get()
     {
         var listaDto = new List<PerfilDTO>();
         foreach (var item in await _context.Perfiles.ToListAsync())

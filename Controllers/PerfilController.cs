@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using CrudAPI.DTOs;
 using CrudAPI.Services;
 
@@ -20,7 +19,7 @@ namespace CrudAPI.Controllers
         [Route("lista")]
         public async Task<ActionResult<List<PerfilDTO>>> Get()
         {
-            return Ok(await _perfilService.Lista());
+            return Ok(await _perfilService.Get());
         }
     }
 }

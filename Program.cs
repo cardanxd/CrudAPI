@@ -12,6 +12,7 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("CadenaSql")));
 
 builder.Services.AddScoped<PerfilService>();
+builder.Services.AddScoped<EmpleadoService>();
 
 var app = builder.Build();
 
